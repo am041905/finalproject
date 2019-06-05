@@ -1,0 +1,160 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <string.h>
+#define N 52
+
+typedef struct { 
+	char suit[10];
+    char symbol[3];
+}Card; 
+
+void shuffle(Card*); 
+void card(int, char*);
+void suit(int, char*);
+void symbol(int, char*);
+void play( Card* const cards,int boilingPoint); 
+int getGrade(Card* const cards,int x); 
+
+int main(void){
+	printf("***********************************************************\n");
+	printf("*********************Black Jack GAME***********************\n");
+	printf("***********************************************************\n");
+	srand( time( NULL ) );
+	Card cards[N];
+    shuffle(cards);
+    int i;
+    printf("洗牌中...\n");
+    for(i = 0; i < N; i++) {
+        printf("%s%s ", cards[i].suit, cards[i].symbol);
+    }
+    printf("\n");
+    printf("\n");
+    printf("************************GAME START*************************\n");
+	play(cards, 21);
+	printf("***********************************************************\n");
+	printf("************************GAME OVER**************************\n");
+	printf("***********************************************************\n"); 
+	return 0;
+}
+void shuffle( Card * const cards ){ 
+	int i;
+    for(i = 0; i < N; i++) {
+        suit(i + 1, cards[i].suit);
+        symbol(i + 1, cards[i].symbol);
+    }
+    for(i = 0; i < N; i++) {
+        int j = rand() % 52;
+        Card tmp = cards[i];
+        cards[i] = cards[j];
+        cards[j] = tmp;
+    }
+}
+void suit(int number, char* suit) {
+    switch((number - 1) / 13) { 
+         case 0: strcpy(suit, "黑桃"); break;
+         case 1: strcpy(suit, "紅心"); break;
+         case 2: strcpy(suit, "方塊"); break;
+         case 3: strcpy(suit, "梅花");
+    }
+}
+
+void symbol(int number, char* symbol) {
+    int remain = number % 13;
+    switch(remain) { 
+        case 0:  sprintf(symbol, "%c ", 'K'); break;
+        case 1:  sprintf(symbol, "%c ", 'A'); break;
+        case 11: sprintf(symbol, "%c ", 'J'); break;
+        case 12: sprintf(symbol, "%c ", 'Q'); break;
+        default: sprintf(symbol, "%-2d", remain);
+    }
+}
+
+ 
+void play( Card * const cards,int boilingPoint){ 
+	int cnt=0,explosion=0,aWantToContinue=1,bWantToContinue=1,aGrade=0,bGrade=0;
+	char face[] = { 1,2,3,4,5,6,7,8,9,10,"J","Q","K"};
+	face[10] = 10;
+	face[11] = 10;
+	face[12] = 10;
+	int a1 = rand()%13, a2 = rand()%13, b1 = rand()%13, b2 = rand()%13;
+	int s1 = rand()%3, s2 = rand()%3, s3 = rand()%3, s4 = rand()%3;
+	/*printf("%d\t%d\t%d\t%d\n",a1,a2,b1,b2);*/
+	int	asGrade1 = face[a1];
+	int asGrade2 = face[a2];
+	int bsGrade1 = face[b1];
+	int bsGrade2 = face[b2];
+	printf("玩家A的起手底牌是:%s%d & %s%d\n",cards[s1].suit,asGrade1,cards[s2].suit,asGrade2);
+	printf("玩家B的起手底牌是:%s%d & %s%d\n",cards[s3].suit,bsGrade1,cards[s4].suit,bsGrade2);
+	aGrade=asGrade1+asGrade2;
+	bGrade=bsGrade1+bsGrade2;
+	printf("\n");
+	while(explosion==0&&cnt<N&&(aWantToContinue==1||bWantToContinue==1)){
+		if(cnt%2==0&&aWantToContinue==1){//換A抽牌(先讓A抽牌,這可能是設定上的缺點,缺少了點公平性) 
+			printf("玩家A目前的點數:%d\n請問是否要繼續抽牌呢?\n抽牌<1>\n停止<任意鍵>\n",aGrade); 
+			scanf("%d",&aWantToContinue); 
+			
+			if(aWantToContinue==1){//a要繼續 
+				printf("玩家A抽到%s%s , 目前點數：%d\n",cards[cnt].suit,cards[cnt].symbol,aGrade+getGrade(cards,cnt)); 
+				aGrade=aGrade+getGrade(cards,cnt); 
+				if(aGrade>boilingPoint){//大於21點的話,就爆炸嚕,A出局
+					printf("玩家A的點數:%d\t玩家B的點數:%d\n",aGrade,bGrade);//大於21點的話,就爆炸嚕,A出局
+					printf("玩家A爆了,玩家B獲勝\n"); 
+					explosion=1; 
+				} 
+			}	 
+		}else if(cnt%2==1&&bWantToContinue==1){//換B抽牌 
+			printf("玩家B目前的點數:%d\n請問是否要繼續抽牌呢?\n抽牌<1>\n停止<任意鍵>\n",bGrade); 
+			scanf("%d",&bWantToContinue); 
+			if(bWantToContinue==1){//b要繼續 
+				printf("玩家B抽到%s%s , 目前點數：%d\n",cards[cnt].suit,cards[cnt].symbol,bGrade+getGrade(cards,cnt));
+				bGrade=bGrade+getGrade(cards,cnt); 
+				if(bGrade>boilingPoint){//大於21點的話,就爆炸嚕,B出局 
+					printf("玩家A的點數:%d\t玩家B的點數:%d\n",aGrade,bGrade);
+					printf("玩家B爆了,玩家A獲勝\n"); 
+					explosion=1; 
+				} 
+			}		 
+		} 
+		printf("\n"); 
+		cnt++; 
+	} 
+	//假設沒有爆炸,可能的情況如下..... 
+	if(explosion==0&&aGrade<bGrade){
+  	printf("玩家A的點數:%d\t玩家B的點數:%d\n",aGrade,bGrade);
+		printf("玩家A輸了,玩家B獲勝\n");
+	}
+	else if(explosion==0&&aGrade>bGrade){
+		printf("玩家A的點數:%d\t玩家B的點數:%d\n",aGrade,bGrade); 
+		printf("玩家B輸了,玩家A獲勝\n");
+	}
+	if(explosion==0&&aGrade==bGrade){
+		printf("玩家A的點數:%d\t玩家B的點數:%d\n",aGrade,bGrade);
+		printf("和局\n");
+	}//都沒有人爆掉&&點數都相同,那就是和局嚕 
+} 
+
+int getGrade(Card * const cards,int x){//把牌上的號碼轉換成點數,假設抽到A,會提醒說要把A當作1還是11 
+	int grade=0,userInput=1; 
+	if(cards[x].symbol=='A'){ 
+		printf("A想變成1還是變成11呢?想變成1請輸入1,想變成11請輸入1以外的整數.\n"); 
+		scanf("%d",&userInput); 
+		if(userInput==1)
+			grade=1;
+		else
+			grade=11;
+	}
+	if(cards[x].symbol=='2') grade=2; 
+	if(cards[x].symbol=='3') grade=3; 
+	if(cards[x].symbol=='4') grade=4; 
+	if(cards[x].symbol=='5') grade=5; 
+	if(cards[x].symbol=='6') grade=6; 
+	if(cards[x].symbol=='7') grade=7; 
+	if(cards[x].symbol=='8') grade=8; 
+	if(cards[x].symbol=='9') grade=9; 
+	if(cards[x].symbol=='10') grade=10; 
+	if(cards[x].symbol=='J') grade=10; 
+	if(cards[x].symbol=='Q') grade=10; 
+	if(cards[x].symbol=='K') grade=10;  
+	return grade;
+}
